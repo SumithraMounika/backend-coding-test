@@ -4,23 +4,19 @@ const express = require('express');
 const app = express();
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./swagger');
-
+const logger = require('../Utils/logger');
 
 const bodyParser = require('body-parser');
 const jsonParser = bodyParser.json();
 
 
-
 module.exports = (db) => {
-    app.get('/api-docs.json', (req, res) => {
-        res.setHeader('Content-Type', 'application/json');
-        res.send(swaggerSpec);
-    });
+    
 
-    app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
     app.get('/health', (req, res) => res.send('Healthy'));
 
     app.post('/rides', jsonParser, (req, res) => {
+        
         const startLatitude = Number(req.body.start_lat);
         const startLongitude = Number(req.body.start_long);
         const endLatitude = Number(req.body.end_lat);
@@ -65,30 +61,26 @@ module.exports = (db) => {
         }
 
         var values = [req.body.start_lat, req.body.start_long, req.body.end_lat, req.body.end_long, req.body.rider_name, req.body.driver_name, req.body.driver_vehicle];
-        
-        const result = db.run('INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)', values, function (err) {
-            if (err) {
-                return res.send({
-                    error_code: 'SERVER_ERROR',
-                    message: 'Unknown error'
+       try{ 
+            var results = await new repository(db).insertRides(values).then((data) => {
+                    return new repository(db).selectRidesById(data.data);
+                }).catch((err) => {
+                    res.status(500).send(err);
                 });
-            }
-
-            db.all('SELECT * FROM Rides WHERE rideID = ?', this.lastID, function (err, rows) {
-                if (err) {
-                    return res.send({
-                        error_code: 'SERVER_ERROR',
-                        message: 'Unknown error'
-                    });
-                }
-
-                res.send(rows);
+                 res.status(200).send(results);
+        } catch(e){
+            return res.status(500).send({
+                error_code: library.SERVER_ERROR,
+                message: e.message
             });
-        });
+        }        
+        logger.info("Server sent the rider information");
     });
 
-    app.get('/rides', (req, res) => {
-        db.all('SELECT * FROM Rides', function (err, rows) {
+    app.get('/rides/:offset/:limit', (req, res) => {
+        var offset = Number(req.params.offset),
+            limit = Number(req.params.limit);
+        db.all('SELECT * FROM Rides ORDER BY rideId ASC LIMIT ? OFFSET ?',[limit, offset], function (err, rows) {
             if (err) {
                 return res.send({
                     error_code: 'SERVER_ERROR',
@@ -100,10 +92,12 @@ module.exports = (db) => {
                 return res.send({
                     error_code: 'RIDES_NOT_FOUND_ERROR',
                     message: 'Could not find any rides'
+                    
                 });
             }
 
             res.send(rows);
+            logger.info("Server sent the rides");
         });
     });
 
@@ -125,7 +119,15 @@ module.exports = (db) => {
 
             res.send(rows);
         });
+        logger.info("Server sent particular ride info");
     });
+
+    app.get('/api-docs.json', (req, res) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.send(swaggerSpec);
+    });
+
+    app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
     return app;
 };

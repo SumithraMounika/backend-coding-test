@@ -45,7 +45,7 @@
 
 /**
  * @swagger
- * 
+ *
  * tags:
  *  - name: "health"
  *    description: "Operations related to service health"
@@ -65,10 +65,10 @@
  *       200:
  *         description: Healthy
  *       500:
- *         description: Problem Detected
+ *         description: Internal Server Error
  */
 
- /**
+/**
  * @swagger
  *
  * /rides:
@@ -84,7 +84,7 @@
  *           items:
  *             $ref: '#/definitions/Ride'
  *       500:
- *         description: Problem Detected
+ *         description: Internal Server Error
  */
 
 /**
@@ -94,7 +94,7 @@
  *   post:
  *     tags:
  *       - "rides"
- *     description: Create a new ride
+ *     description: To Create a new ride
  *     consumes:
  *       - "application/json"
  *     produces:
@@ -114,17 +114,17 @@
  *           items:
  *             $ref: '#/definitions/Ride'
  *       500:
- *         description: Problem Detected
+ *         description: Internal Server Error
  */
 
- /**
+/**
  * @swagger
  *
  * /rides/{id}:
  *   get:
  *     tags:
  *       - "rides"
- *     description: Get ride based on ride ID
+ *     description: Get specific ride with rideID
  *     parameters:
  *       - name: "id"
  *         in: "path"
@@ -133,11 +133,11 @@
  *         type: string
  *     responses:
  *       200:
- *         description: Return current ride
+ *         description: get current ride
  *         schema:
  *           type: array
  *           items:
  *             $ref: '#/definitions/Ride'
  *       500:
- *         description: Problem Detected
+ *         description: Internal Server Error
  */
